@@ -96,7 +96,7 @@ bool FetchLatestRelease(const std::string& owner, const std::string& repo,
   release->body = ExtractJsonStringValue(response, "body");
 
   const std::regex asset_pattern(
-      R"("name"\s*:\s*"([^"]*)".*?"browser_download_url"\s*:\s*"([^"]*)")",
+      R"re("name"\s*:\s*"([^"]*)".*?"browser_download_url"\s*:\s*"([^"]*)")re",
       std::regex::ECMAScript);
   auto begin = std::sregex_iterator(response.begin(), response.end(),
                                     asset_pattern);

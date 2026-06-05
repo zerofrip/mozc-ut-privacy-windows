@@ -4,7 +4,6 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
-#include <shellapi.h>
 #include <shlwapi.h>
 
 #include <algorithm>
@@ -55,7 +54,20 @@ std::wstring GetArchitectureSuffix() {
 }
 
 bool EnsureDirectory(const std::wstring& path) {
-  return SHCreateDirectoryExW(nullptr, path.c_str(), nullptr) == ERROR_SUCCESS ||
+  if (path.empty()) {
+    return false;
+  }
+  if (GetFileAttributesW(path.c_str()) != INVALID_FILE_ATTRIBUTES) {
+    return true;
+  }
+  const size_t separator = path.find_last_of(L"\\/");
+  if (separator != std::wstring::npos) {
+    const std::wstring parent = path.substr(0, separator);
+    if (!parent.empty() && !EnsureDirectory(parent)) {
+      return false;
+    }
+  }
+  return CreateDirectoryW(path.c_str(), nullptr) != 0 ||
          GetLastError() == ERROR_ALREADY_EXISTS;
 }
 
