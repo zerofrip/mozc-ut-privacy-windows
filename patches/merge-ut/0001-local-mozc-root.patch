@@ -1,0 +1,242 @@
+diff --git a/src/merge/make.sh b/src/merge/make.sh
+index d54350f..dc161d1 100644
+--- a/src/merge/make.sh
++++ b/src/merge/make.sh
+@@ -98,4 +98,8 @@ fi
+ cat mozcdic-ut-*.txt > mozcdic-ut.txt
+ 
+ # IDを更新、重複エントリを削除、コストを調整
+-python merge_dictionaries.py mozcdic-ut.txt
++if [[ -n "${MOZC_ROOT:-}" ]]; then
++    python merge_dictionaries.py mozcdic-ut.txt --mozc-root "${MOZC_ROOT}"
++else
++    python merge_dictionaries.py mozcdic-ut.txt
++fi
+diff --git a/src/merge/merge_dictionaries.py b/src/merge/merge_dictionaries.py
+index 778e462..d344c4f 100644
+--- a/src/merge/merge_dictionaries.py
++++ b/src/merge/merge_dictionaries.py
+@@ -4,6 +4,7 @@
+ # Author: UTUMI Hirosi (utuhiro78 at yahoo dot co dot jp)
+ # License: Apache License, Version 2.0
+ 
++import argparse
+ import bz2
+ import csv
+ import html
+@@ -18,13 +19,34 @@ from pathlib import Path
+ from unicodedata import normalize
+ from zipfile import ZipFile
+ 
++MOZC_ROOT = None
++
++
++def parse_args():
++    parser = argparse.ArgumentParser(
++        description='Merge UT dictionary entries and align them with Mozc.'
++    )
++    parser.add_argument(
++        'ut_dictionary',
++        help='Path to mozcdic-ut.txt (read and overwritten in place).',
++    )
++    parser.add_argument(
++        '--mozc-root',
++        help=(
++            'Path to a local Mozc source tree. When set, dictionary data and '
++            'id.def are read from this tree instead of downloading from GitHub.'
++        ),
++    )
++    return parser.parse_args()
++
+ 
+ def main():
+-    if len(sys.argv) == 1:
+-        print('No file specified.')
+-        sys.exit()
++    global MOZC_ROOT
++    args = parse_args()
++    if args.mozc_root:
++        MOZC_ROOT = Path(args.mozc_root).resolve()
+ 
+-    file_ut = sys.argv[1]
++    file_ut = args.ut_dictionary
+     ut_entry = get_ut_entry(file_ut)
+     mozc_entry, id_mozc = get_mozc_entry()
+ 
+@@ -63,7 +85,36 @@ def get_ut_entry(file_ut):
+     return ut_entry
+ 
+ 
+-def get_mozc_entry():
++def _load_mozc_from_local_tree(mozc_root: Path):
++    id_def = mozc_root / 'src' / 'data' / 'dictionary_oss' / 'id.def'
++    dict_dir = mozc_root / 'src' / 'data' / 'dictionary_oss'
++
++    id_mozc = None
++    with open(id_def, encoding='utf-8') as file:
++        for line in file:
++            if ' 名詞,一般,' in line:
++                id_mozc = line.split(' 名詞,一般,')[0]
++                break
++
++    mozc_entry = []
++    for dict_file in sorted(dict_dir.glob('dictionary0*.txt')):
++        with open(dict_file, encoding='utf-8') as file:
++            reader = csv.reader(file, delimiter='\t')
++            mozc_entry.extend(list(reader))
++
++    mozc_entry_mod = []
++    for entry in mozc_entry:
++        yomi, id1, id2, cost, hyouki = entry[:5]
++        hyouki = remove_short_or_long_hyouki(hyouki)
++        if not hyouki:
++            continue
++        hyouki = normalize_entry(hyouki)
++        mozc_entry_mod.append([yomi, id1, id2, cost, hyouki])
++
++    return mozc_entry_mod, id_mozc
++
++
++def _load_mozc_from_github_zip():
+     # Mozc の最終コミット日を取得
+     url = 'https://api.github.com/repos/google/mozc/commits/master'
+ 
+@@ -78,11 +129,9 @@ def get_mozc_entry():
+     url = 'https://github.com/google/mozc/archive/refs/heads/master.zip'
+ 
+     if not Path(f'mozc-{date_str}.zip').exists():
+-        urllib.request.urlretrieve(
+-                url, f'mozc-{date_str}.zip')
++        urllib.request.urlretrieve(url, f'mozc-{date_str}.zip')
+ 
+     with ZipFile(f'mozc-{date_str}.zip') as zip_ref:
+-        # 一般名詞の ID を取得
+         with zip_ref.open(
+                 'mozc-master/src/data/dictionary_oss/id.def') as file:
+             for line in file:
+@@ -92,39 +141,35 @@ def get_mozc_entry():
+                     id_mozc = line.split(' 名詞,一般,')[0]
+                     break
+ 
+-        # Mozc 辞書のファイルリストを取得
+         all_files = zip_ref.namelist()
+         dict_path = 'mozc-master/src/data/dictionary_oss/dictionary0'
+         dict_files = [f for f in all_files if f.startswith(dict_path)]
+ 
+-        # Mozc 辞書のエントリを取得
+         mozc_entry = []
+-
+         for dict_file in dict_files:
+             with zip_ref.open(dict_file) as file:
+-                # バイナリストリームをテキストストリームに変換
+                 file_text = io.TextIOWrapper(file, encoding='utf-8')
+                 reader = csv.reader(file_text, delimiter='\t')
+                 mozc_entry.extend(list(reader))
+ 
+         mozc_entry_mod = []
+-
+         for entry in mozc_entry:
+             yomi, id1, id2, cost, hyouki = entry[:5]
+-
+-            # 不要な表記をスキップ
+             hyouki = remove_short_or_long_hyouki(hyouki)
+             if not hyouki:
+                 continue
+-
+-            # 表記を正規化
+             hyouki = normalize_entry(hyouki)
+-
+             mozc_entry_mod.append([yomi, id1, id2, cost, hyouki])
+ 
+     return mozc_entry_mod, id_mozc
+ 
+ 
++def get_mozc_entry():
++    if MOZC_ROOT is not None:
++        return _load_mozc_from_local_tree(MOZC_ROOT)
++    return _load_mozc_from_github_zip()
++
++
+ def remove_duplicate(mozc_entry, ut_entry):
+     all_entry = mozc_entry + ut_entry
+     mozc_entry = []
+@@ -173,7 +218,6 @@ def generate_jawiki_hit_dict():
+             req = urllib.request.Request(url, headers=headers)
+             with urllib.request.urlopen(req) as response, \
+                     open(jawiki_index_file, "wb") as out_file:
+-                # 1MB ずつ書き込む
+                 while True:
+                     chunk = response.read(1024 * 1024)
+                     if not chunk:
+@@ -190,30 +234,16 @@ def generate_jawiki_hit_dict():
+             'Help:', 'Category:', 'プロジェクト:', '曖昧さ回避')
+ 
+         for entry in file:
+-            # 1004375:312:数学\n
+             entry = entry.rstrip()
+             entry = entry.split(':', 2)[2]
+-
+-            # HTML特殊文字を変換
+             entry = html.unescape(entry)
+-
+-            # 「BEST (三浦大知のアルバム)」を
+-            # 「三浦大知のアルバム)」に変更。
+-            # 「三浦大知」を前方一致検索できるようにする
+             entry = entry.split(' (')[-1]
+-
+-            # 不要な表記をスキップ
+             entry = remove_short_or_long_hyouki(entry)
+-            if not entry or \
+-                    entry.startswith(entry_to_skip):
++            if not entry or entry.startswith(entry_to_skip):
+                 continue
+-
+-            # 表記を正規化
+             entry = normalize_entry(entry)
+-
+             jawiki_index.append(entry)
+ 
+-    # 重複を削除してリストに戻してソート
+     jawiki_index = sorted(list(set(jawiki_index)))
+ 
+     jawiki_hit_dict = {}
+@@ -224,7 +254,6 @@ def generate_jawiki_hit_dict():
+         jawiki_entry = jawiki_index[i]
+         c = 1
+ 
+-        # 前方一致するエントリがなくなるまでカウント
+         while i + c < jawiki_index_len and \
+                 jawiki_index[i + c].startswith(jawiki_entry):
+             c = c + 1
+@@ -243,22 +272,14 @@ def apply_jawiki_hit(ut_entry, jawiki_hit_dict):
+         cost = int(cost)
+         jawiki_hit_count = jawiki_hit_dict.get(hyouki, 0)
+ 
+-        # 最大ヒット数を抑制する
+         jawiki_hit_count = min(jawiki_hit_count, 30)
+         is_ascii = hyouki.isascii()
+ 
+-        # 英数字のみの表記で、
+-        # jawiki のヒット数が 0 の場合はスキップ
+-        # jawiki のヒット数が 1 以上の場合はコストを 9000 台にする
+         if is_ascii:
+             if jawiki_hit_count == 0:
+                 continue
+             else:
+                 cost = 9000 + (cost // 20)
+-        # 英数字以外を含む表記で、
+-        # jawiki のヒット数が 0 の場合はコストを 9000 台にする
+-        # jawiki のヒット数が 1 の場合はコストを 8000 台にする
+-        # jawiki のヒット数が 2 以上の場合はコストを 7000 台にする
+         elif jawiki_hit_count == 0:
+             cost = 9000 + (cost // 20)
+         elif jawiki_hit_count == 1:
+@@ -275,8 +296,6 @@ def apply_jawiki_hit(ut_entry, jawiki_hit_dict):
+ 
+ 
+ def remove_short_or_long_hyouki(hyouki):
+-    # 表記が1文字の場合はスキップ
+-    # 表記が26文字以上の場合はスキップ。候補ウィンドウが大きくなりすぎる
+     len_hyouki = len(hyouki)
+     if len_hyouki < 2 or len_hyouki > 25:
+         hyouki = None

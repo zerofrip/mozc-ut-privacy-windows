@@ -1,0 +1,39 @@
+# Build outputs
+dist/
+build/
+*.msi
+*.zip
+SHA256SUMS.txt
+SHA256SUMS.txt.sig
+
+# Dictionary merge working files
+vendor/merge-ut-dictionaries/src/merge/mozcdic-ut*
+vendor/merge-ut-dictionaries/src/merge/mozcdic-ut-*/
+vendor/merge-ut-dictionaries/src/merge/mozc-*.zip
+vendor/merge-ut-dictionaries/src/merge/jawiki-*
+
+# Mozc build artifacts
+vendor/mozc/src/bazel-*
+vendor/mozc/src/bazel-bin/
+vendor/mozc/src/bazel-out/
+vendor/mozc/src/third_party/
+
+# Updater build
+updater/build/
+
+# Generated license outputs (regenerated in CI)
+generated/
+__pycache__/
+*.pyc
+.venv/
+
+# Signing
+*.pfx
+*.p12
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

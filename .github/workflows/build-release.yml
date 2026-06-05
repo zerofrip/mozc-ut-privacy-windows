@@ -1,0 +1,111 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (without v prefix)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  build_x64:
+    needs: prepare
+    uses: ./.github/workflows/reusable-build-windows.yml
+    with:
+      architecture: x64
+      version: ${{ needs.prepare.outputs.version }}
+
+  build_arm64:
+    needs: prepare
+    uses: ./.github/workflows/reusable-build-windows.yml
+    with:
+      architecture: arm64
+      version: ${{ needs.prepare.outputs.version }}
+
+  release:
+    needs: [prepare, build_x64, build_arm64]
+    runs-on: windows-2025
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download x64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-x64
+          path: artifacts/x64
+
+      - name: Download ARM64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-arm64
+          path: artifacts/arm64
+
+      - name: Merge artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item artifacts/x64/* release/
+          Copy-Item artifacts/arm64/* release/
+
+      - name: Sign artifacts
+        shell: pwsh
+        env:
+          WINDOWS_CODE_SIGNING_CERT_BASE64: ${{ secrets.WINDOWS_CODE_SIGNING_CERT_BASE64 }}
+          WINDOWS_CODE_SIGNING_CERT_PASSWORD: ${{ secrets.WINDOWS_CODE_SIGNING_CERT_PASSWORD }}
+          WINDOWS_CODE_SIGNING_TIMESTAMP_URL: ${{ secrets.WINDOWS_CODE_SIGNING_TIMESTAMP_URL }}
+        run: |
+          $Files = Get-ChildItem release -Recurse -Include *.msi,*.exe | ForEach-Object { $_.FullName }
+          if ($Files.Count -gt 0) {
+            ./scripts/sign_artifacts.ps1 -Files $Files
+          }
+
+      - name: Generate checksums
+        shell: pwsh
+        run: |
+          $Files = Get-ChildItem release -File | Where-Object { $_.Extension -in '.msi','.zip','.exe' } | ForEach-Object { $_.FullName }
+          ./scripts/generate_checksums.ps1 -OutputFile release/SHA256SUMS.txt -Files $Files
+
+      - name: Generate release notes
+        shell: pwsh
+        run: |
+          python scripts/generate_release_notes.py --tag "v${{ needs.prepare.outputs.version }}" --output release/RELEASE_NOTES.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.prepare.outputs.version }}
+          name: Mozc UT Privacy Edition v${{ needs.prepare.outputs.version }}
+          body_path: release/RELEASE_NOTES.md
+          files: |
+            release/*
+          fail_on_unmatched_files: true

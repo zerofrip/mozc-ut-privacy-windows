@@ -1,0 +1,6 @@
+Japan Post postal code data (KEN_ALL.CSV)
+
+The Japan Post zip code data is subject to Japan Post Co., Ltd. terms of use.
+See: https://www.post.japanpost.jp/zipcode/dl/readme.html
+
+This data is used in UT place-name dictionary generation.

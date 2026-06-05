@@ -1,0 +1,83 @@
+name: Reusable Windows Build
+
+on:
+  workflow_call:
+    inputs:
+      architecture:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+    outputs:
+      msi_path:
+        value: ${{ jobs.build.outputs.msi_path }}
+      portable_path:
+        value: ${{ jobs.build.outputs.portable_path }}
+
+jobs:
+  build:
+    runs-on: windows-2025
+    timeout-minutes: 120
+    outputs:
+      msi_path: ${{ steps.paths.outputs.msi_path }}
+      portable_path: ${{ steps.paths.outputs.portable_path }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: pip install jaconv
+
+      - name: Prepare build tree
+        shell: pwsh
+        run: python scripts/prepare_build.py
+
+      - name: Restore update_deps cache
+        uses: actions/cache@v4
+        with:
+          path: vendor/mozc/src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('vendor/mozc/src/build_tools/update_deps.py') }}
+
+      - name: Build Mozc
+        shell: pwsh
+        run: ./scripts/build_windows.ps1 -Architecture ${{ inputs.architecture }}
+
+      - name: Build updater
+        shell: pwsh
+        run: |
+          cmake -S updater -B updater/build -G "Visual Studio 17 2022" -A ${{ inputs.architecture == 'arm64' && 'ARM64' || 'x64' }}
+          cmake --build updater/build --config Release
+          New-Item -ItemType Directory -Force -Path dist/updater | Out-Null
+          Copy-Item "updater/build/Release/MozcUTUpdater.exe" "dist/updater/MozcUTUpdater-${{ inputs.version }}-win-${{ inputs.architecture }}.exe"
+
+      - name: Package portable ZIP
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          ./scripts/package_portable.ps1 -Version ${{ inputs.version }} -Architecture ${{ inputs.architecture }} -OutputDir dist
+
+      - name: Collect MSI artifact
+        shell: pwsh
+        id: paths
+        run: |
+          $MsiSource = "vendor/mozc/src/bazel-bin/win32/installer/MozcUTPrivacy64.msi"
+          $MsiDest = "dist/MozcUTPrivacy-${{ inputs.version }}-win-${{ inputs.architecture }}.msi"
+          Copy-Item $MsiSource $MsiDest
+          "msi_path=$MsiDest" >> $env:GITHUB_OUTPUT
+          "portable_path=dist/MozcUTPrivacy-${{ inputs.version }}-win-${{ inputs.architecture }}-portable.zip" >> $env:GITHUB_OUTPUT
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ inputs.architecture }}
+          path: dist/
+          if-no-files-found: error

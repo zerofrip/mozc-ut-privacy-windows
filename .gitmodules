@@ -1,0 +1,8 @@
+[submodule "vendor/mozc"]
+	path = vendor/mozc
+	url = https://github.com/google/mozc.git
+	branch = master
+[submodule "vendor/merge-ut-dictionaries"]
+	path = vendor/merge-ut-dictionaries
+	url = https://github.com/utuhiro78/merge-ut-dictionaries.git
+	branch = master

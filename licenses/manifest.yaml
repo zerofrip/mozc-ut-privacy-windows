@@ -1,0 +1,85 @@
+# Machine-readable license inventory for Mozc UT Privacy Edition.
+components:
+  - name: Mozc
+    spdx: BSD-3-Clause
+    license_file: licenses/mozc/BSD-3-Clause.txt
+    copyright: Google Inc.
+    source_url: https://github.com/google/mozc
+
+  - name: merge-ut-dictionaries
+    spdx: Apache-2.0
+    license_file: licenses/merge-ut/Apache-2.0.txt
+    copyright: UTUMI Hirosi
+    source_url: https://github.com/utuhiro78/merge-ut-dictionaries
+
+  - name: Mozc UT Privacy Edition Project
+    spdx: BSD-3-Clause
+    license_file: licenses/project/BSD-3-Clause.txt
+    copyright: Mozc UT Privacy Edition contributors
+    source_url: https://github.com/mozc-ut-privacy/mozc-ut-privacy-windows
+
+  - name: IPAdic Dictionary Data
+    spdx: LicenseRef-IPAdic
+    license_file: licenses/dictionaries/IPAdic.txt
+    copyright: Nara Institute of Science and Technology
+    source_url: https://github.com/google/mozc
+
+  - name: mozcdic-ut-jawiki
+    spdx: CC-BY-SA-3.0
+    license_file: licenses/dictionaries/CC-BY-SA-3.0.txt
+    copyright: Wikipedia contributors
+    source_url: https://github.com/utuhiro78/mozcdic-ut-jawiki
+
+  - name: mozcdic-ut-sudachidict
+    spdx: Apache-2.0
+    license_file: licenses/merge-ut/Apache-2.0.txt
+    copyright: Works Applications Co., Ltd.
+    source_url: https://github.com/WorksApplications/SudachiDict
+
+  - name: mozcdic-ut-personal-names
+    spdx: LicenseRef-Combined
+    license_file: licenses/dictionaries/Combined-UT.txt
+    copyright: Various contributors
+    source_url: https://github.com/utuhiro78/mozcdic-ut-personal-names
+
+  - name: mozcdic-ut-place-names
+    spdx: LicenseRef-JapanPost
+    license_file: licenses/dictionaries/JapanPost.txt
+    copyright: Japan Post Co., Ltd.
+    source_url: https://www.post.japanpost.jp/zipcode/dl/readme.html
+
+  - name: Abseil
+    spdx: Apache-2.0
+    license_file: licenses/merge-ut/Apache-2.0.txt
+    copyright: The Abseil Authors
+    source_url: https://github.com/abseil/abseil-cpp
+
+  - name: Protocol Buffers
+    spdx: BSD-3-Clause
+    license_file: licenses/mozc/BSD-3-Clause.txt
+    copyright: Google Inc.
+    source_url: https://github.com/protocolbuffers/protobuf
+
+  - name: Qt
+    spdx: LGPL-3.0-or-later
+    license_file: licenses/dictionaries/LGPL-3.0.txt
+    copyright: The Qt Company Ltd.
+    source_url: https://www.qt.io/
+
+  - name: LLVM
+    spdx: Apache-2.0
+    license_file: licenses/merge-ut/Apache-2.0.txt
+    copyright: LLVM Project
+    source_url: https://llvm.org/
+
+  - name: Windows Implementation Library
+    spdx: MIT
+    license_file: licenses/dictionaries/MIT.txt
+    copyright: Microsoft Corporation
+    source_url: https://github.com/microsoft/wil
+
+  - name: Japanese Usage Dictionary
+    spdx: CC-BY-SA-4.0
+    license_file: licenses/dictionaries/CC-BY-SA-4.0.txt
+    copyright: Japanese Usage Dictionary contributors
+    source_url: https://github.com/mhagiwara/japanese-usage-dictionary

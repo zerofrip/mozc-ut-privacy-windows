@@ -1,0 +1,172 @@
+diff --git a/src/build_defs.bzl b/src/build_defs.bzl
+index 0da95172a..9d4e66bcc 100644
+--- a/src/build_defs.bzl
++++ b/src/build_defs.bzl
+@@ -195,10 +195,14 @@ def mozc_win32_resource_from_template(
+         generated_rc_file,
+         src = src,
+     )
++    _effective_branding = BRANDING
++    if _effective_branding not in ("Mozc", "GoogleJapaneseInput"):
++        if _effective_branding == "Mozc UT Privacy Edition":
++            _effective_branding = "Mozc"
+     _rc_defines = {
+         "Mozc": ["MOZC_BUILD"],
+         "GoogleJapaneseInput": ["GOOGLE_JAPANESE_INPUT_BUILD"],
+-    }.get(BRANDING, [])
++    }.get(_effective_branding, [])
+ 
+     # Create main resource
+     win32_resource_files_main = windows_resource
+@@ -366,7 +370,11 @@ def mozc_win32_cc_prod_binary(
+       visibility: optional. The visibility of the target.
+       **kwargs: other arguments passed to mozc_cc_binary.
+     """
+-    target_name = executable_name_map.get(BRANDING, None)
++    _effective_branding = BRANDING
++    if _effective_branding not in executable_name_map:
++        if _effective_branding == "Mozc UT Privacy Edition":
++            _effective_branding = "Mozc"
++    target_name = executable_name_map.get(_effective_branding, None)
+     if target_name == None:
+         return
+ 
+diff --git a/src/config.bzl b/src/config.bzl
+index 31589013e..aab76fd41 100644
+--- a/src/config.bzl
++++ b/src/config.bzl
+@@ -33,7 +33,7 @@
+ # The following command reverts it.
+ # % git update-index --no-assume-unchanged config.bzl
+ 
+-BRANDING = "Mozc"
++BRANDING = "Mozc UT Privacy Edition"
+ 
+ BAZEL_TOOLS_PREFIX = "@bazel_tools"
+ 
+diff --git a/src/data/dictionary_oss/BUILD.bazel b/src/data/dictionary_oss/BUILD.bazel
+index 575a9034c..ad01b822f 100644
+--- a/src/data/dictionary_oss/BUILD.bazel
++++ b/src/data/dictionary_oss/BUILD.bazel
+@@ -71,6 +71,7 @@ filegroup(
+         "dictionary07.txt",
+         "dictionary08.txt",
+         "dictionary09.txt",
++        "dictionary10.txt",
+         "//dictionary:zip_code_data",
+     ],
+     visibility = ["//visibility:private"],
+diff --git a/src/data/installer/BUILD.bazel b/src/data/installer/BUILD.bazel
+index f6de9420b..747b3a38f 100644
+--- a/src/data/installer/BUILD.bazel
++++ b/src/data/installer/BUILD.bazel
+@@ -27,7 +27,12 @@
+ # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+-exports_files(["credits_en.html"])
++exports_files([
++    "credits_en.html",
++    "LICENSES.txt",
++    "THIRD_PARTY_LICENSES.txt",
++    "CREDITS.txt",
++])
+ 
+ genrule(
+     name = "android_asset_licenses",
+diff --git a/src/win32/installer/BUILD.bazel b/src/win32/installer/BUILD.bazel
+index 1c31b5159..546164f54 100644
+--- a/src/win32/installer/BUILD.bazel
++++ b/src/win32/installer/BUILD.bazel
+@@ -66,9 +66,15 @@ config_setting(
+     visibility = ["//visibility:private"],
+ )
+ 
+-_WXS_FILE = ":installer_oss_64bit.wxs" if BRANDING == "Mozc" else ":installer_64bit.wxs"
++_IS_MOZC_OSS = BRANDING in ("Mozc", "Mozc UT Privacy Edition")
+ 
+-_MSI_FILE = "Mozc64.msi" if BRANDING == "Mozc" else "GoogleJapaneseInput64.msi"
++_WXS_FILE = ":installer_oss_64bit.wxs" if _IS_MOZC_OSS else ":installer_64bit.wxs"
++
++_MSI_FILE = (
++    "MozcUTPrivacy64.msi" if BRANDING == "Mozc UT Privacy Edition" else
++    "Mozc64.msi" if BRANDING == "Mozc" else
++    "GoogleJapaneseInput64.msi"
++)
+ 
+ selects.config_setting_group(
+     name = "build_arm64_binaries",
+@@ -93,6 +99,9 @@ genrule(
+         "//base:mozc_version_txt",
+         "//data/images/win:product_icon.ico",
+         "//data/installer:credits_en.html",
++        "//data/installer:LICENSES.txt",
++        "//data/installer:THIRD_PARTY_LICENSES.txt",
++        "//data/installer:CREDITS.txt",
+         "@qt_win//:bin/Qt6Core.dll",
+         "@wix//:wix.exe",
+     ] + select({
+diff --git a/src/win32/installer/build_installer.py b/src/win32/installer/build_installer.py
+index 4bccad8c5..f47915f9d 100644
+--- a/src/win32/installer/build_installer.py
++++ b/src/win32/installer/build_installer.py
+@@ -130,6 +130,8 @@ def run_wix4(args) -> None:
+     omaha_clientstate_key = (
+         f'Software\\Google\\Update\\ClientState\\{{{omaha_guid}}}'
+     )
++  elif branding == 'Mozc UT Privacy Edition':
++    upgrade_code = 'A7F3E2B1-8C4D-4E5F-9A6B-1C2D3E4F5A6B'
+   elif branding == 'Mozc':
+     upgrade_code = 'DD94B570-B5E2-4100-9D42-61930C611D8A'
+ 
+diff --git a/src/win32/installer/installer_oss_64bit.wxs b/src/win32/installer/installer_oss_64bit.wxs
+index b3b308e60..a0285e473 100644
+--- a/src/win32/installer/installer_oss_64bit.wxs
++++ b/src/win32/installer/installer_oss_64bit.wxs
+@@ -57,8 +57,8 @@
+     http://msdn.microsoft.com/en-us/library/aa367850.aspx.
+     So we change the product ID for every new version.
+   -->
+-  <Package Name="Mozc" Language="1041" Codepage="932" Version="$(var.MozcVersion)" Manufacturer="Google LLC" UpgradeCode="$(var.UpgradeCode)" InstallerVersion="500">
+-    <SummaryInformation Keywords="Installer" Description="Mozc インストーラー" Manufacturer="Google LLC" Codepage="932" />
++  <Package Name="Mozc UT Privacy Edition" Language="1041" Codepage="932" Version="$(var.MozcVersion)" Manufacturer="Mozc UT Privacy Edition Project" UpgradeCode="$(var.UpgradeCode)" InstallerVersion="500">
++    <SummaryInformation Keywords="Installer" Description="Mozc UT Privacy Edition インストーラー" Manufacturer="Mozc UT Privacy Edition Project" Codepage="932" />
+ 
+     <!--
+        While obtaining the OS build number from the registry does not seem to be officially
+@@ -101,10 +101,10 @@
+     <Property Id="OS_BUILD_NUMBER" Secure="yes">
+       <RegistrySearch Id="CurrentBuildNumberValue" Type="raw" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" />
+     </Property>
+-    <Launch Condition="(OS_BUILD_NUMBER AND (OS_BUILD_NUMBER &gt;= 17763)) OR (REMOVE=&quot;ALL&quot;)" Message="Mozc をインストールするには Windows 10 1809 以降にアップグレードする必要があります。" />
++    <Launch Condition="(OS_BUILD_NUMBER AND (OS_BUILD_NUMBER &gt;= 17763)) OR (REMOVE=&quot;ALL&quot;)" Message="Mozc UT Privacy Edition をインストールするには Windows 10 1809 以降にアップグレードする必要があります。" />
+ 
+     <!-- Check if the user have the administrative privileges. -->
+-    <Launch Condition="Privileged" Message="Mozc をインストールするには管理者権限が必要です。" />
++    <Launch Condition="Privileged" Message="Mozc UT Privacy Edition をインストールするには管理者権限が必要です。" />
+     <Media Id="1" Cabinet="Mozc.cab" EmbedCab="yes" CompressionLevel="high" />
+ 
+     <?if $(var.MozcTIP64ArmPath) == "" and $(var.MozcTIP64XPath) == "" and $(var.MozcUniversalInstaller) == "" ?>
+@@ -136,10 +136,10 @@
+     </Upgrade>
+ 
+     <UI>
+-      <Error Id="4000" Message="新しいバージョンの Mozc が既にインストールされています。" />
++      <Error Id="4000" Message="新しいバージョンの Mozc UT Privacy Edition が既にインストールされています。" />
+     </UI>
+ 
+-    <Feature Id="MozcInstall" Title="Mozc" Level="1">
++    <Feature Id="MozcInstall" Title="Mozc UT Privacy Edition" Level="1">
+       <ComponentRef Id="MozcTIP32" />
+       <ComponentRef Id="MozcTIP64" />
+       <?if $(var.MozcTIP64ArmPath) != "" and $(var.MozcTIP64XPath) != "" ?>
+@@ -344,6 +344,9 @@
+         <Directory Id="DocumentsDir" Name="documents">
+           <Component Id="CreditsEn">
+             <File Id="credits_en.html" Name="credits_en.html" DiskId="1" Checksum="yes" Vital="yes" Source="$(var.DocumentsDir)/credits_en.html" />
++            <File Id="licenses_txt" Name="LICENSES.txt" DiskId="1" Checksum="yes" Vital="yes" Source="$(var.DocumentsDir)/LICENSES.txt" />
++            <File Id="third_party_licenses_txt" Name="THIRD_PARTY_LICENSES.txt" DiskId="1" Checksum="yes" Vital="yes" Source="$(var.DocumentsDir)/THIRD_PARTY_LICENSES.txt" />
++            <File Id="credits_txt" Name="CREDITS.txt" DiskId="1" Checksum="yes" Vital="yes" Source="$(var.DocumentsDir)/CREDITS.txt" />
+           </Component>
+         </Directory>
+         <Directory Id="QtPlatformsPluginDir" Name="platforms">

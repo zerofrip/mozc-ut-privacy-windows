@@ -1,0 +1,7 @@
+# Pinned upstream commit SHAs for reproducible builds.
+# Updated automatically by scripts/sync_upstream.py on monthly sync.
+mozc=be6dd36e2f38f849e26c3c9b35e67ca20525260f
+merge_ut=424073b5770b6dd5078fa58e2717c9ddeba571a0
+last_release_tag=
+last_mozc_sha=be6dd36e2f38f849e26c3c9b35e67ca20525260f
+last_merge_ut_sha=424073b5770b6dd5078fa58e2717c9ddeba571a0

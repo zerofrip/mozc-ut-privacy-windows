@@ -1,0 +1,26 @@
+name: Validate
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  license-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check license manifest
+        run: python3 scripts/generate_licenses.py --check
+
+  patch-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Verify patches apply cleanly
+        run: |
+          cd vendor/mozc && git checkout -- . && cd ../..
+          cd vendor/merge-ut-dictionaries && git checkout -- . && cd ../..
+          python3 scripts/apply_patches.py

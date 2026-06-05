@@ -1,0 +1,9 @@
+GNU Lesser General Public License v3.0 (LGPL-3.0)
+
+Qt is licensed under the GNU Lesser General Public License version 3.
+Users may replace the Qt libraries used by this software in accordance
+with the LGPL requirements.
+
+Full license: https://www.gnu.org/licenses/lgpl-3.0.html
+
+Qt source code is available at https://www.qt.io/download-open-source
