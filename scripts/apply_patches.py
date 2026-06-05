@@ -3,8 +3,10 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -14,7 +16,7 @@ PATCH_DIRS = [
 ]
 
 GIT_APPLY_PREFIX = ["git", "-c", "core.autocrlf=false", "-c", "core.eol=lf"]
-GIT_APPLY_FLAGS = ["--whitespace=nowarn", "--ignore-space-at-eol"]
+GIT_APPLY_FLAGS = ["--whitespace=nowarn", "--ignore-space-change"]
 
 
 def read_patch_text(patch_file: Path) -> str:
@@ -22,16 +24,25 @@ def read_patch_text(patch_file: Path) -> str:
     return patch_file.read_text(encoding="utf-8").replace("\r\n", "\n")
 
 
-def git_apply(
-    args: list[str], cwd: Path, patch_text: str | None = None
-) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        GIT_APPLY_PREFIX + ["apply"] + GIT_APPLY_FLAGS + args,
-        cwd=cwd,
-        input=patch_text,
-        capture_output=True,
-        text=True,
-    )
+def git_apply(args: list[str], cwd: Path, patch_text: str) -> subprocess.CompletedProcess[str]:
+    """Apply a patch from a UTF-8 temp file (avoids Windows cp1252 stdin issues)."""
+    fd, temp_path = tempfile.mkstemp(suffix=".patch", text=True)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(patch_text)
+        return subprocess.run(
+            GIT_APPLY_PREFIX + ["apply"] + GIT_APPLY_FLAGS + args + [temp_path],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    finally:
+        try:
+            os.unlink(temp_path)
+        except OSError:
+            pass
 
 
 def apply_patch(patch_file: Path) -> None:
