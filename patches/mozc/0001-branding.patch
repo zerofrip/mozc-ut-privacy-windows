@@ -147,7 +147,16 @@ index b3b308e60..a0285e473 100644
      <Media Id="1" Cabinet="Mozc.cab" EmbedCab="yes" CompressionLevel="high" />
  
      <?if $(var.MozcTIP64ArmPath) == "" and $(var.MozcTIP64XPath) == "" and $(var.MozcUniversalInstaller) == "" ?>
-@@ -136,10 +136,10 @@
+@@ -115,7 +115,7 @@
+       <Property Id="PROCESSOR_ARCHITECTURE" Secure="yes">
+         <RegistrySearch Id="ProcessorArchitectureValue" Type="raw" Root="HKLM" Key="System\CurrentControlSet\Control\Session Manager\Environment" Name="PROCESSOR_ARCHITECTURE" />
+       </Property>
+-      <Launch Condition="(NOT (PROCESSOR_ARCHITECTURE=&quot;ARM64&quot;)) OR UPGRADING OR (REMOVE=&quot;ALL&quot;)" Message="ARM64 環境へのインストールは未対応です" />
++      <Launch Condition="(NOT (PROCESSOR_ARCHITECTURE=&quot;ARM64&quot;)) OR UPGRADING OR (REMOVE=&quot;ALL&quot;)" Message="この MSI は x64 専用です。ARM64 PC では MozcUTPrivacy-*-win-arm64.msi を使用してください。" />
+     <?endif?>
+ 
+     <!-- Set Add/Remove Program Icon -->
+@@ -136,10 +140,10 @@
      </Upgrade>
  
      <UI>
@@ -184,6 +193,19 @@ index b3b308e60..a0285e473 100644
 +          </Component>
          </Directory>
          <Directory Id="QtPlatformsPluginDir" Name="platforms">
+diff --git a/src/win32/tip/BUILD.bazel b/src/win32/tip/BUILD.bazel
+index e3a8774a4..f1b2c3d4e 100644
+--- a/src/win32/tip/BUILD.bazel
++++ b/src/win32/tip/BUILD.bazel
+@@ -138,7 +138,7 @@ genrule(
+     srcs = [
+         "//base:mozc_version_txt",
+     ],
+-    outs = ["mozc_tip64x.dll" if BRANDING == "Mozc" else "GoogleIMEJaTIP64X.msi"],
++    outs = ["mozc_tip64x.dll" if BRANDING in ("Mozc", "MozcUTPrivacy") else "GoogleIMEJaTIP64X.msi"],
+     cmd = " ".join([
+         "$(location :build_tip_forwarder_dll)",
+         "--output=$@",
 diff --git a/src/win32/tip/build_tip_forwarder_dll.py b/src/win32/tip/build_tip_forwarder_dll.py
 index 4cb84fb32..a8f3e1b2c 100644
 --- a/src/win32/tip/build_tip_forwarder_dll.py

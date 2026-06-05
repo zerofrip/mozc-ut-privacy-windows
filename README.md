@@ -32,6 +32,15 @@ Each release includes:
 4. Add **Japanese** input language in Windows Settings if not already present.
 5. Select **Mozc UT Privacy Edition** as the input method.
 
+### Installer exits at "必要な情報を集めています"
+
+| Cause | What to do |
+|-------|------------|
+| **Wrong architecture** | ARM64 PC (Snapdragon など) では `*-win-arm64.msi` を使用。`x64.msi` は ARM64 ではインストールできません。 |
+| **Not elevated** | 右クリック → **管理者として実行**。 |
+| **Already installed** | 同じかより新しいバージョンが入っている場合は終了します。設定 → アプリから既存版を確認してください。 |
+| **Need details** | PowerShell でログ取得: `msiexec /i "path\to\installer.msi" /l*v "$env:TEMP\mozc-ut-install.log"` |
+
 ## Privacy Guarantees
 
 | Component | Network access |
