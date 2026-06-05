@@ -14,6 +14,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: true
@@ -25,7 +28,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Determine version
         id: version
@@ -59,16 +62,16 @@ jobs:
     runs-on: windows-2025
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download x64 artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: windows-x64
           path: artifacts/x64
 
       - name: Download ARM64 artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: windows-arm64
           path: artifacts/arm64
@@ -77,8 +80,8 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path release | Out-Null
-          Copy-Item artifacts/x64/* release/
-          Copy-Item artifacts/arm64/* release/
+          Copy-Item -Path artifacts/x64/* -Destination release/ -Recurse -Force
+          Copy-Item -Path artifacts/arm64/* -Destination release/ -Recurse -Force
 
       - name: Sign artifacts
         shell: pwsh

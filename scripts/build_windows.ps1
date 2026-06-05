@@ -17,6 +17,7 @@ try {
     python build_tools/update_deps.py
 
     Write-Host "Building Qt ($Architecture)..."
+    $env:CMAKE_LOG_LEVEL = 'ERROR'
     if ($Architecture -eq 'arm64') {
         python build_tools/build_qt.py --release --confirm_license --target_arch=arm64
     } else {
@@ -33,7 +34,9 @@ try {
         '--config', 'oss_windows',
         '--config', 'release_build',
         'package',
-        '--verbose_failures'
+        '--verbose_failures',
+        '--copt=-Wno-macro-redefined',
+        '--copt=-Wno-nullability-completeness'
     )
 
     if ($Architecture -eq 'arm64') {

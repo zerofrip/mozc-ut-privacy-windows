@@ -1,5 +1,9 @@
 name: Reusable Windows Build
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+
 on:
   workflow_call:
     inputs:
@@ -25,7 +29,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -48,7 +52,7 @@ jobs:
         run: python scripts/prepare_build.py
 
       - name: Restore update_deps cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: vendor/mozc/src/third_party_cache
           key: update_deps-${{ runner.os }}-${{ hashFiles('vendor/mozc/src/build_tools/update_deps.py') }}
@@ -59,8 +63,10 @@ jobs:
 
       - name: Build updater
         shell: pwsh
+        env:
+          CMAKE_LOG_LEVEL: ERROR
         run: |
-          cmake -S updater -B updater/build -G "Visual Studio 17 2022" -A ${{ inputs.architecture == 'arm64' && 'ARM64' || 'x64' }}
+          cmake -S updater -B updater/build -G "Visual Studio 17 2022" -A ${{ inputs.architecture == 'arm64' && 'ARM64' || 'x64' }} --log-level=ERROR
           cmake --build updater/build --config Release
           New-Item -ItemType Directory -Force -Path dist/updater | Out-Null
           Copy-Item "updater/build/Release/MozcUTUpdater.exe" "dist/updater/MozcUTUpdater-${{ inputs.version }}-win-${{ inputs.architecture }}.exe"
@@ -82,7 +88,7 @@ jobs:
           "portable_path=dist/MozcUTPrivacy-${{ inputs.version }}-win-${{ inputs.architecture }}-portable.zip" >> $env:GITHUB_OUTPUT
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: windows-${{ inputs.architecture }}
           path: dist/
