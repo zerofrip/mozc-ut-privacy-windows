@@ -160,13 +160,52 @@ index b3b308e60..a0285e473 100644
        <ComponentRef Id="MozcTIP32" />
        <ComponentRef Id="MozcTIP64" />
        <?if $(var.MozcTIP64ArmPath) != "" and $(var.MozcTIP64XPath) != "" ?>
-@@ -344,6 +344,9 @@
+@@ -170,4 +170,7 @@
+      <ComponentRef Id="SysProcs" />
+       <ComponentRef Id="PrelaunchProcesses" />
+       <ComponentRef Id="CreditsEn" />
++      <ComponentRef Id="LicensesTxt" />
++      <ComponentRef Id="ThirdPartyLicensesTxt" />
++      <ComponentRef Id="CreditsTxt" />
+     </Feature>
+@@ -344,6 +344,15 @@
          <Directory Id="DocumentsDir" Name="documents">
            <Component Id="CreditsEn">
              <File Id="credits_en.html" Name="credits_en.html" DiskId="1" Checksum="yes" Vital="yes" Source="$(var.DocumentsDir)/credits_en.html" />
-+            <File Id="licenses_txt" Name="LICENSES.txt" DiskId="1" Checksum="yes" Vital="yes" Source="$(var.DocumentsDir)/LICENSES.txt" />
-+            <File Id="third_party_licenses_txt" Name="THIRD_PARTY_LICENSES.txt" DiskId="1" Checksum="yes" Vital="yes" Source="$(var.DocumentsDir)/THIRD_PARTY_LICENSES.txt" />
-+            <File Id="credits_txt" Name="CREDITS.txt" DiskId="1" Checksum="yes" Vital="yes" Source="$(var.DocumentsDir)/CREDITS.txt" />
            </Component>
++          <Component Id="LicensesTxt" Guid="B1A2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D">
++            <File Id="licenses_txt" Name="LICENSES.txt" DiskId="1" Checksum="yes" Vital="yes" Source="$(var.DocumentsDir)/LICENSES.txt" />
++          </Component>
++          <Component Id="ThirdPartyLicensesTxt" Guid="C2B3A4D5-E6F7-4B8C-9D0E-1F2A3B4C5D6E">
++            <File Id="third_party_licenses_txt" Name="THIRD_PARTY_LICENSES.txt" DiskId="1" Checksum="yes" Vital="yes" Source="$(var.DocumentsDir)/THIRD_PARTY_LICENSES.txt" />
++          </Component>
++          <Component Id="CreditsTxt" Guid="D3C4B5E6-F7A8-4C9D-0E1F-2A3B4C5D6E7F">
++            <File Id="credits_txt" Name="CREDITS.txt" DiskId="1" Checksum="yes" Vital="yes" Source="$(var.DocumentsDir)/CREDITS.txt" />
++          </Component>
          </Directory>
          <Directory Id="QtPlatformsPluginDir" Name="platforms">
+diff --git a/src/win32/tip/build_tip_forwarder_dll.py b/src/win32/tip/build_tip_forwarder_dll.py
+index 4cb84fb32..a8f3e1b2c 100644
+--- a/src/win32/tip/build_tip_forwarder_dll.py
++++ b/src/win32/tip/build_tip_forwarder_dll.py
+@@ -230,7 +230,10 @@ def build_on_windows(args: argparse.Namespace) -> None:
+     FileNotFoundError: when any required file is not found.
+   """
+   version = mozc_version.MozcVersion(args.version_file)
+-  info = ForwarderInfo(branding=args.branding, version=version)
++  branding = args.branding
++  if branding == 'MozcUTPrivacy':
++    branding = 'Mozc'
++  info = ForwarderInfo(branding=branding, version=version)
+ 
+   # Currently only x64 is supported as the host architecture.
+   # TODO: https://github.com/google/mozc/issues/1296 - Support ARM64 host.
+@@ -362,7 +365,7 @@ def parse_args() -> argparse.Namespace:
+       '--branding',
+       dest='branding',
+       default='Mozc',
+-      choices=['Mozc', 'GoogleJapaneseInput'],
++      choices=['Mozc', 'GoogleJapaneseInput', 'MozcUTPrivacy'],
+       help='branding',
+   )
+   parser.add_argument(
