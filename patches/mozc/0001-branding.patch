@@ -8,7 +8,7 @@ index 0da95172a..9d4e66bcc 100644
      )
 +    _effective_branding = BRANDING
 +    if _effective_branding not in ("Mozc", "GoogleJapaneseInput"):
-+        if _effective_branding == "Mozc UT Privacy Edition":
++        if _effective_branding == "MozcUTPrivacy":
 +            _effective_branding = "Mozc"
      _rc_defines = {
          "Mozc": ["MOZC_BUILD"],
@@ -25,7 +25,7 @@ index 0da95172a..9d4e66bcc 100644
 -    target_name = executable_name_map.get(BRANDING, None)
 +    _effective_branding = BRANDING
 +    if _effective_branding not in executable_name_map:
-+        if _effective_branding == "Mozc UT Privacy Edition":
++        if _effective_branding == "MozcUTPrivacy":
 +            _effective_branding = "Mozc"
 +    target_name = executable_name_map.get(_effective_branding, None)
      if target_name == None:
@@ -40,7 +40,7 @@ index 31589013e..aab76fd41 100644
  # % git update-index --no-assume-unchanged config.bzl
  
 -BRANDING = "Mozc"
-+BRANDING = "Mozc UT Privacy Edition"
++BRANDING = "MozcUTPrivacy"
  
  BAZEL_TOOLS_PREFIX = "@bazel_tools"
  
@@ -83,13 +83,13 @@ index 1c31b5159..546164f54 100644
  )
  
 -_WXS_FILE = ":installer_oss_64bit.wxs" if BRANDING == "Mozc" else ":installer_64bit.wxs"
-+_IS_MOZC_OSS = BRANDING in ("Mozc", "Mozc UT Privacy Edition")
++_IS_MOZC_OSS = BRANDING in ("Mozc", "MozcUTPrivacy")
  
 -_MSI_FILE = "Mozc64.msi" if BRANDING == "Mozc" else "GoogleJapaneseInput64.msi"
 +_WXS_FILE = ":installer_oss_64bit.wxs" if _IS_MOZC_OSS else ":installer_64bit.wxs"
 +
 +_MSI_FILE = (
-+    "MozcUTPrivacy64.msi" if BRANDING == "Mozc UT Privacy Edition" else
++    "MozcUTPrivacy64.msi" if BRANDING == "MozcUTPrivacy" else
 +    "Mozc64.msi" if BRANDING == "Mozc" else
 +    "GoogleJapaneseInput64.msi"
 +)
@@ -114,7 +114,7 @@ index 4bccad8c5..f47915f9d 100644
      omaha_clientstate_key = (
          f'Software\\Google\\Update\\ClientState\\{{{omaha_guid}}}'
      )
-+  elif branding == 'Mozc UT Privacy Edition':
++  elif branding == 'MozcUTPrivacy':
 +    upgrade_code = 'A7F3E2B1-8C4D-4E5F-9A6B-1C2D3E4F5A6B'
    elif branding == 'Mozc':
      upgrade_code = 'DD94B570-B5E2-4100-9D42-61930C611D8A'
