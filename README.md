@@ -34,12 +34,23 @@ Each release includes:
 
 ### Installer exits at "必要な情報を集めています"
 
+このメッセージは MSI の準備段階（コスト計算）の表示です。直後に終了する場合、多くは次のいずれかです。
+
 | Cause | What to do |
 |-------|------------|
-| **Wrong architecture** | ARM64 PC (Snapdragon など) では `*-win-arm64.msi` を使用。`x64.msi` は ARM64 ではインストールできません。 |
-| **Not elevated** | 右クリック → **管理者として実行**。 |
-| **Already installed** | 同じかより新しいバージョンが入っている場合は終了します。設定 → アプリから既存版を確認してください。 |
-| **Need details** | PowerShell でログ取得: `msiexec /i "path\to\installer.msi" /l*v "$env:TEMP\mozc-ut-install.log"` |
+| **Not elevated** | MSI を右クリック → **管理者として実行**。UAC で「はい」を選ぶ。 |
+| **Already installed** | 既にインストール済みだと「再構成」が即終了します（ログ: `entering maintenance mode`）。IME が動かない場合は下記の修復コマンドを試してください。 |
+| **Already installed (newer)** | より新しいバージョンが入っていると終了します。設定 → アプリで確認し、必要ならアンインストール。 |
+| **Wrong architecture** | ARM64 PC では `*-win-arm64.msi`、x64 PC では `*-win-x64.msi` を使用。 |
+| **Need details** | 診断スクリプト（管理者 PowerShell）: `.\scripts\troubleshoot_msi.ps1 -MsiPath "C:\path\to\installer.msi"` |
+
+**既にインストール済みの場合の修復（管理者 PowerShell）:**
+
+```powershell
+msiexec /fa "C:\path\to\MozcUTPrivacy-....msi" /l*v "$env:TEMP\mozc-ut-repair.log"
+# または強制再インストール:
+msiexec /i "C:\path\to\MozcUTPrivacy-....msi" REINSTALL=ALL REINSTALLMODE=amus /l*v "$env:TEMP\mozc-ut-reinstall.log"
+```
 
 ## Privacy Guarantees
 

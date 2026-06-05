@@ -1,0 +1,29 @@
+diff --git a/src/win32/installer/installer_oss_64bit.wxs b/src/win32/installer/installer_oss_64bit.wxs
+index a0285e473..b7c4e8f12 100644
+--- a/src/win32/installer/installer_oss_64bit.wxs
++++ b/src/win32/installer/installer_oss_64bit.wxs
+@@ -101,7 +101,8 @@
+     <Property Id="OS_BUILD_NUMBER" Secure="yes">
+-      <RegistrySearch Id="CurrentBuildNumberValue" Type="raw" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" />
++      <RegistrySearch Id="CurrentBuildNumberValue" Type="integer" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" />
+     </Property>
+-    <Launch Condition="(OS_BUILD_NUMBER AND (OS_BUILD_NUMBER &gt;= 17763)) OR (REMOVE=&quot;ALL&quot;)" Message="Mozc UT Privacy Edition をインストールするには Windows 10 1809 以降にアップグレードする必要があります。" />
++    <!-- VersionNT64 + VersionNT>=1000 (Windows 10+) is a fallback when the registry search fails. -->
++    <Launch Condition="((OS_BUILD_NUMBER &gt;= 17763) OR (VersionNT64 AND VersionNT &gt;= 1000)) OR (REMOVE=&quot;ALL&quot;)" Message="Mozc UT Privacy Edition をインストールするには Windows 10 1809 以降にアップグレードする必要があります。" />
+ 
+     <!-- Check if the user have the administrative privileges. -->
+     <Launch Condition="Privileged" Message="Mozc UT Privacy Edition をインストールするには管理者権限が必要です。" />
+@@ -138,7 +139,11 @@
+     </Upgrade>
+ 
+     <UI>
+-      <Error Id="4000" Message="新しいバージョンの Mozc UT Privacy Edition が既にインストールされています。" />
++      <Error Id="4000" Message="新しいバージョンの Mozc UT Privacy Edition が既にインストールされています。設定 → アプリから既存版をアンインストールしてから再実行してください。" />
+     </UI>
+ 
++    <InstallUISequence>
++      <Custom Action="NewerVersionError" After="FindRelatedProducts" Condition="NEWERVERSIONDETECTED" />
++    </InstallUISequence>
++
+     <Feature Id="MozcInstall" Title="Mozc UT Privacy Edition" Level="1">
+       <ComponentRef Id="MozcTIP32" />
