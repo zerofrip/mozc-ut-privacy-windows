@@ -15,21 +15,29 @@ This document describes how to build Mozc UT Privacy Edition locally on Windows.
 ## Clone and Prepare
 
 ```cmd
-git clone --recursive https://github.com/mozc-ut-privacy/mozc-ut-privacy-windows.git
+git clone https://github.com/zerofrip/mozc-ut-privacy-windows.git
 cd mozc-ut-privacy-windows
 pip install -r requirements.txt
-python scripts\checkout_vendor.py
-python scripts\apply_patches.py
-python scripts\integrate_dictionary.py
-python scripts\generate_licenses.py
-python scripts\bump_version.py --data-bump --build-bump
-```
-
-Or run the combined prepare step:
-
-```cmd
 python scripts\prepare_build.py
 ```
+
+`prepare_build.py` automatically:
+
+1. Clones upstream Mozc and merge-ut-dictionaries at SHAs pinned in `upstream.lock`
+2. Applies branding and dictionary integration patches
+3. Builds and merges the UT dictionary into `dictionary10.txt`
+4. Generates license files and bumps `version.bzl`
+
+### Verify prepare pipeline (Linux/macOS/WSL)
+
+Before running the full Windows build, confirm the prepare step succeeds:
+
+```bash
+pip install jaconv
+./scripts/verify_prepare.sh
+```
+
+This step was verified locally and takes ~5 minutes (dictionary download).
 
 ## Build the IME
 

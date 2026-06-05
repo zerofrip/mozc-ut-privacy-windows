@@ -32,10 +32,13 @@ jobs:
         run: |
           if [ -n "${{ github.event.inputs.version }}" ]; then
             VERSION="${{ github.event.inputs.version }}"
-          else
+          elif [[ "${GITHUB_REF_NAME}" == v* ]]; then
             VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(python3 scripts/get_build_version.py)"
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Using release version: $VERSION"
 
   build_x64:
     needs: prepare

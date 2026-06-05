@@ -6,17 +6,9 @@ build/
 SHA256SUMS.txt
 SHA256SUMS.txt.sig
 
-# Dictionary merge working files
-vendor/merge-ut-dictionaries/src/merge/mozcdic-ut*
-vendor/merge-ut-dictionaries/src/merge/mozcdic-ut-*/
-vendor/merge-ut-dictionaries/src/merge/mozc-*.zip
-vendor/merge-ut-dictionaries/src/merge/jawiki-*
-
-# Mozc build artifacts
-vendor/mozc/src/bazel-*
-vendor/mozc/src/bazel-bin/
-vendor/mozc/src/bazel-out/
-vendor/mozc/src/third_party/
+# Vendored upstream sources (cloned by scripts/checkout_vendor.py)
+vendor/mozc/
+vendor/merge-ut-dictionaries/
 
 # Updater build
 updater/build/

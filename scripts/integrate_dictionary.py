@@ -47,12 +47,22 @@ def main() -> int:
     env["MOZC_ROOT"] = str(MOZC_ROOT)
 
     print("Building UT dictionary...")
-    subprocess.run(
-        ["bash", "make.sh"],
-        cwd=MERGE_DIR,
-        env=env,
-        check=True,
-    )
+    make_sh = MERGE_DIR / "make.sh"
+    shells = ["bash", "sh"] if sys.platform == "win32" else ["bash"]
+    last_error: Exception | None = None
+    for shell in shells:
+        try:
+            subprocess.run(
+                [shell, str(make_sh)],
+                cwd=MERGE_DIR,
+                env=env,
+                check=True,
+            )
+            break
+        except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+            last_error = exc
+    else:
+        raise RuntimeError("Failed to run make.sh") from last_error
 
     ut_output = MERGE_DIR / "mozcdic-ut.txt"
     if not ut_output.exists():
