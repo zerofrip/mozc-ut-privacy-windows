@@ -61,8 +61,11 @@ def try_submodule_init(path: Path) -> bool:
 def normalize_repo(path: Path, sha: str) -> None:
     run_git(["config", "core.autocrlf", "false"], path)
     run_git(["config", "core.eol", "lf"], path)
+    run_git(["config", "core.safecrlf", "false"], path)
     run_git(["fetch", "origin"], path)
     run_git(["checkout", "--force", sha], path)
+    # Renormalize the index and working tree to LF on Windows runners.
+    run_git(["add", "--renormalize", "."], path)
     run_git(["reset", "--hard", sha], path)
 
 

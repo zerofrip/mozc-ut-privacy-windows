@@ -1,0 +1,8 @@
+# Keep patch files LF so git apply works on Windows runners.
+*.patch text eol=lf
+
+# Shell and script files should remain LF.
+*.sh text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf

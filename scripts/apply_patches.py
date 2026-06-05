@@ -13,15 +13,22 @@ PATCH_DIRS = [
     REPO_ROOT / "patches" / "merge-ut",
 ]
 
-# Keep LF line endings so patches apply consistently on Windows CI runners.
 GIT_APPLY_PREFIX = ["git", "-c", "core.autocrlf=false", "-c", "core.eol=lf"]
-GIT_APPLY_FLAGS = ["--whitespace=nowarn"]
+GIT_APPLY_FLAGS = ["--whitespace=nowarn", "--ignore-space-at-eol"]
 
 
-def git_apply(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+def read_patch_text(patch_file: Path) -> str:
+    """Normalize patch content to LF regardless of checkout platform."""
+    return patch_file.read_text(encoding="utf-8").replace("\r\n", "\n")
+
+
+def git_apply(
+    args: list[str], cwd: Path, patch_text: str | None = None
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         GIT_APPLY_PREFIX + ["apply"] + GIT_APPLY_FLAGS + args,
         cwd=cwd,
+        input=patch_text,
         capture_output=True,
         text=True,
     )
@@ -38,10 +45,12 @@ def apply_patch(patch_file: Path) -> None:
     if not cwd.exists():
         raise RuntimeError(f"Vendor directory not found: {cwd}")
 
+    patch_text = read_patch_text(patch_file)
     print(f"Applying {patch_file.name} in {cwd}")
-    result = git_apply(["--check", str(patch_file)], cwd)
+
+    result = git_apply(["--check"], cwd, patch_text)
     if result.returncode != 0:
-        result = git_apply(["--reverse", "--check", str(patch_file)], cwd)
+        result = git_apply(["--reverse", "--check"], cwd, patch_text)
         if result.returncode == 0:
             print("  Already applied, skipping.")
             return
@@ -49,7 +58,7 @@ def apply_patch(patch_file: Path) -> None:
             f"Patch check failed for {patch_file}:\n{result.stderr}"
         )
 
-    result = git_apply([str(patch_file)], cwd)
+    result = git_apply([], cwd, patch_text)
     if result.returncode != 0:
         raise RuntimeError(
             f"Patch apply failed for {patch_file}:\n{result.stderr}"
