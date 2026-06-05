@@ -31,6 +31,7 @@ try {
     Write-Host "Building Qt ($Architecture)..."
     $env:CMAKE_LOG_LEVEL = 'ERROR'
     $env:CMAKE_SUPPRESS_DEVELOPER_WARNINGS = 'ON'
+    $env:CMAKE_WARN_UNUSED_CLI = 'OFF'
     if ($Architecture -eq 'arm64') {
         python build_tools/build_qt.py --release --confirm_license --target_arch=arm64
     } else {
@@ -50,7 +51,12 @@ try {
         '--verbose_failures'
     )
     foreach ($flag in $ClangWarningSuppressions) {
-        $BazelArgs += @('--copt=' + $flag, '--host_copt=' + $flag)
+        $BazelArgs += @(
+            '--copt=' + $flag,
+            '--host_copt=' + $flag,
+            '--cxxopt=' + $flag,
+            '--host_cxxopt=' + $flag
+        )
     }
 
     if ($Architecture -eq 'arm64') {
