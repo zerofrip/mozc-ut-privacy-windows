@@ -1,6 +1,10 @@
 #include "util.h"
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
+#include <shellapi.h>
 #include <shlwapi.h>
 
 #include <algorithm>

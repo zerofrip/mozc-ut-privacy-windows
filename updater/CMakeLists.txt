@@ -17,6 +17,7 @@ target_include_directories(MozcUTUpdater PRIVATE src)
 target_link_libraries(MozcUTUpdater PRIVATE winhttp crypt32 shlwapi shell32)
 
 if(MSVC)
+    target_compile_definitions(MozcUTUpdater PRIVATE NOMINMAX UNICODE _UNICODE)
     target_compile_options(MozcUTUpdater PRIVATE /W4 /utf-8)
 endif()
 

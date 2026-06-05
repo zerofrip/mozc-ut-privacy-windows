@@ -16,8 +16,12 @@ try {
     Write-Host "Installing Mozc dependencies..."
     python build_tools/update_deps.py
 
-    Write-Host "Building Qt..."
-    python build_tools/build_qt.py --release --confirm_license
+    Write-Host "Building Qt ($Architecture)..."
+    if ($Architecture -eq 'arm64') {
+        python build_tools/build_qt.py --release --confirm_license --target_arch=arm64
+    } else {
+        python build_tools/build_qt.py --release --confirm_license
+    }
 
     if (Test-Path 'third_party\qt_src') {
         Write-Host "Removing Qt source to save disk space..."
