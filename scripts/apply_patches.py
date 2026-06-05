@@ -13,9 +13,21 @@ PATCH_DIRS = [
     REPO_ROOT / "patches" / "merge-ut",
 ]
 
+# Keep LF line endings so patches apply consistently on Windows CI runners.
+GIT_APPLY_PREFIX = ["git", "-c", "core.autocrlf=false", "-c", "core.eol=lf"]
+GIT_APPLY_FLAGS = ["--whitespace=nowarn"]
+
+
+def git_apply(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        GIT_APPLY_PREFIX + ["apply"] + GIT_APPLY_FLAGS + args,
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+    )
+
 
 def apply_patch(patch_file: Path) -> None:
-    # Determine target directory from patch path prefix.
     if patch_file.parent.name == "mozc":
         cwd = REPO_ROOT / "vendor" / "mozc"
     elif patch_file.parent.name == "merge-ut":
@@ -27,40 +39,28 @@ def apply_patch(patch_file: Path) -> None:
         raise RuntimeError(f"Vendor directory not found: {cwd}")
 
     print(f"Applying {patch_file.name} in {cwd}")
-    result = subprocess.run(
-        ["git", "apply", "--check", str(patch_file)],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-    )
+    result = git_apply(["--check", str(patch_file)], cwd)
     if result.returncode != 0:
-        # Already applied patches are skipped.
-        result = subprocess.run(
-            ["git", "apply", "--reverse", "--check", str(patch_file)],
-            cwd=cwd,
-            capture_output=True,
-            text=True,
-        )
+        result = git_apply(["--reverse", "--check", str(patch_file)], cwd)
         if result.returncode == 0:
-            print(f"  Already applied, skipping.")
+            print("  Already applied, skipping.")
             return
         raise RuntimeError(
             f"Patch check failed for {patch_file}:\n{result.stderr}"
         )
 
-    subprocess.run(
-        ["git", "apply", str(patch_file)],
-        cwd=cwd,
-        check=True,
-    )
+    result = git_apply([str(patch_file)], cwd)
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Patch apply failed for {patch_file}:\n{result.stderr}"
+        )
 
 
 def main() -> int:
     for patch_dir in PATCH_DIRS:
         if not patch_dir.exists():
             continue
-        patches = sorted(patch_dir.glob("*.patch"))
-        for patch_file in patches:
+        for patch_file in sorted(patch_dir.glob("*.patch")):
             apply_patch(patch_file)
     print("All patches applied successfully.")
     return 0

@@ -22,6 +22,9 @@ VENDORS = {
     },
 }
 
+# Prevent CRLF conversion on Windows runners so git apply works reliably.
+GIT_LF_CONFIG = ["-c", "core.autocrlf=false", "-c", "core.eol=lf"]
+
 
 def parse_lock() -> dict[str, str]:
     values: dict[str, str] = {}
@@ -39,13 +42,15 @@ def is_git_repo(path: Path) -> bool:
 
 
 def run_git(args: list[str], cwd: Path) -> None:
-    subprocess.run(["git"] + args, cwd=cwd, check=True)
+    subprocess.run(["git"] + GIT_LF_CONFIG + args, cwd=cwd, check=True)
 
 
 def try_submodule_init(path: Path) -> bool:
     rel_path = path.relative_to(REPO_ROOT)
     result = subprocess.run(
-        ["git", "submodule", "update", "--init", "--recursive", str(rel_path)],
+        ["git"] + GIT_LF_CONFIG + [
+            "submodule", "update", "--init", "--recursive", str(rel_path)
+        ],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
@@ -53,9 +58,16 @@ def try_submodule_init(path: Path) -> bool:
     return result.returncode == 0 and is_git_repo(path)
 
 
+def normalize_repo(path: Path, sha: str) -> None:
+    run_git(["config", "core.autocrlf", "false"], path)
+    run_git(["config", "core.eol", "lf"], path)
+    run_git(["fetch", "origin"], path)
+    run_git(["checkout", "--force", sha], path)
+    run_git(["reset", "--hard", sha], path)
+
+
 def clone_or_update(path: Path, url: str, sha: str) -> None:
     if path.exists() and not is_git_repo(path):
-        # Remove placeholder files such as .gitkeep.
         if path.is_dir() and not any(path.iterdir()):
             path.rmdir()
         elif path.is_dir():
@@ -67,11 +79,14 @@ def clone_or_update(path: Path, url: str, sha: str) -> None:
             if path.exists():
                 shutil.rmtree(path)
             print(f"Cloning {url} -> {path}")
-            run_git(["clone", url, str(path)], REPO_ROOT)
+            subprocess.run(
+                ["git"] + GIT_LF_CONFIG + ["clone", url, str(path)],
+                cwd=REPO_ROOT,
+                check=True,
+            )
 
     print(f"Checking out {sha[:12]} in {path.name}")
-    run_git(["fetch", "origin"], path)
-    run_git(["checkout", "--force", sha], path)
+    normalize_repo(path, sha)
 
 
 def main() -> int:
