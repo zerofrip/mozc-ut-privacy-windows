@@ -60,6 +60,7 @@ Output MSI: `vendor\mozc\src\bazel-bin\win32\installer\MozcUTPrivacy64.msi`
 ```cmd
 cmake -S updater -B updater\build -G "Visual Studio 17 2022" -A x64
 cmake --build updater\build --config Release
+copy updater\build\Release\MozcUTUpdater.exe dist\MozcUTUpdater-{version}-win-x64.exe
 ```
 
 ## Package Portable ZIP

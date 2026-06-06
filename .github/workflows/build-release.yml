@@ -80,6 +80,24 @@ jobs:
           Copy-Item -Path artifacts/x64/* -Destination release/ -Recurse -Force
           Copy-Item -Path artifacts/arm64/* -Destination release/ -Recurse -Force
 
+      - name: Verify release artifacts
+        shell: pwsh
+        run: |
+          $Version = '${{ needs.prepare.outputs.version }}'
+          $Required = @(
+            "MozcUTPrivacy-$Version-win-x64.msi",
+            "MozcUTPrivacy-$Version-win-arm64.msi",
+            "MozcUTPrivacy-$Version-win-x64-portable.zip",
+            "MozcUTPrivacy-$Version-win-arm64-portable.zip",
+            "MozcUTUpdater-$Version-win-x64.exe",
+            "MozcUTUpdater-$Version-win-arm64.exe"
+          )
+          $Missing = $Required | Where-Object { -not (Test-Path "release/$_") }
+          if ($Missing.Count -gt 0) {
+            Write-Error "Missing release artifacts:`n$($Missing -join "`n")"
+          }
+          Write-Host 'All required release artifacts are present.'
+
       - name: Sign artifacts
         shell: pwsh
         env:
@@ -95,7 +113,10 @@ jobs:
       - name: Generate checksums
         shell: pwsh
         run: |
-          $Files = Get-ChildItem release -File | Where-Object { $_.Extension -in '.msi','.zip','.exe' } | ForEach-Object { $_.FullName }
+          $Files = Get-ChildItem release -Recurse -File |
+            Where-Object { $_.Extension -in '.msi','.zip','.exe' } |
+            Sort-Object FullName |
+            ForEach-Object { $_.FullName }
           ./scripts/generate_checksums.ps1 -OutputFile release/SHA256SUMS.txt -Files $Files
 
       - name: Generate release notes
@@ -110,5 +131,8 @@ jobs:
           name: Mozc UT Privacy Edition v${{ needs.prepare.outputs.version }}
           body_path: release/RELEASE_NOTES.md
           files: |
-            release/*
+            release/*.msi
+            release/*.zip
+            release/*.exe
+            release/SHA256SUMS.txt
           fail_on_unmatched_files: true
