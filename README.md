@@ -1,48 +1,48 @@
 # Mozc UT Privacy Edition (Windows)
 
-An unofficial, privacy-focused Windows distribution of [Mozc](https://github.com/google/mozc) with [merge-ut-dictionaries](https://github.com/utuhiro78/merge-ut-dictionaries) integrated.
+[Mozc](https://github.com/google/mozc) をベースに [merge-ut-dictionaries](https://github.com/utuhiro78/merge-ut-dictionaries) を統合した、非公式のプライバシー重視 Windows 向け配布版です。
 
-## Features
+## 特徴
 
-- **Expanded dictionary** — Community UT dictionaries merged automatically during each build
-- **No telemetry** — No analytics, tracking, or cloud conversion services
-- **Local processing** — All IME conversion happens on your machine
-- **Optional updater** — Separate updater checks GitHub Releases only (see [docs/NETWORK.md](docs/NETWORK.md))
-- **Full license compliance** — `LICENSES.txt`, `THIRD_PARTY_LICENSES.txt`, and `CREDITS.txt` bundled in every release
+- **拡張辞書** — コミュニティ製 UT 辞書をビルド時に自動マージ
+- **テレメトリなし** — 分析・追跡・クラウド変換サービスは一切なし
+- **ローカル処理** — IME の変換はすべてローカルマシン上で実行
+- **オプションのアップデータ** — 別途提供のアップデータは GitHub Releases のみを参照（[docs/NETWORK.md](docs/NETWORK.md) を参照）
+- **ライセンス完全準拠** — 各リリースに `LICENSES.txt`、`THIRD_PARTY_LICENSES.txt`、`CREDITS.txt` を同梱
 
-## Downloads
+## ダウンロード
 
-Releases are published on the [GitHub Releases](https://github.com/mozc-ut-privacy/mozc-ut-privacy-windows/releases) page.
+リリースは [GitHub Releases](https://github.com/mozc-ut-privacy/mozc-ut-privacy-windows/releases) ページで公開しています。
 
-Each release includes:
+各リリースには次のファイルが含まれます。
 
-| Artifact | Description |
-|----------|-------------|
-| `MozcUTPrivacy-{ver}-win-x64.msi` | x64 installer |
-| `MozcUTPrivacy-{ver}-win-arm64.msi` | ARM64 installer |
-| `MozcUTPrivacy-{ver}-win-{arch}-portable.zip` | Portable package |
-| `SHA256SUMS.txt` | Checksums for all binaries |
-| `MozcUTUpdater-{ver}-win-{arch}.exe` | Optional auto-updater |
+| ファイル | 説明 |
+|----------|------|
+| `MozcUTPrivacy-{ver}-win-x64.msi` | x64 向けインストーラー |
+| `MozcUTPrivacy-{ver}-win-arm64.msi` | ARM64 向けインストーラー |
+| `MozcUTPrivacy-{ver}-win-{arch}-portable.zip` | ポータブル版 |
+| `SHA256SUMS.txt` | 全バイナリのチェックサム |
+| `MozcUTUpdater-{ver}-win-{arch}.exe` | オプションの自動アップデータ |
 
-## Quick Install
+## クイックインストール
 
-1. Download the MSI matching your architecture (x64 or ARM64).
-2. Verify the SHA256 checksum against `SHA256SUMS.txt`.
-3. Run the installer with administrator privileges.
-4. Add **Japanese** input language in Windows Settings if not already present.
-5. Select **Mozc UT Privacy Edition** as the input method.
+1. PC のアーキテクチャ（x64 または ARM64）に合った MSI をダウンロードする。
+2. `SHA256SUMS.txt` と照合して SHA256 チェックサムを確認する。
+3. インストーラーを**管理者権限**で実行する。
+4. Windows 設定で **日本語** 入力言語が未追加なら追加する。
+5. 入力方式として **Mozc UT Privacy Edition** を選択する。
 
-### Installer exits at "必要な情報を集めています"
+### 「必要な情報を集めています」で終了する場合
 
-このメッセージは MSI の準備段階（コスト計算）の表示です。直後に終了する場合、多くは次のいずれかです。
+このメッセージは MSI の準備段階（コスト計算）の表示です。直後に終了する場合、多くは次のいずれかが原因です。
 
-| Cause | What to do |
-|-------|------------|
-| **Not elevated** | MSI を右クリック → **管理者として実行**。UAC で「はい」を選ぶ。 |
-| **Already installed** | 既にインストール済みだと「再構成」が即終了します（ログ: `entering maintenance mode`）。IME が動かない場合は下記の修復コマンドを試してください。 |
-| **Already installed (newer)** | より新しいバージョンが入っていると終了します。設定 → アプリで確認し、必要ならアンインストール。 |
-| **Wrong architecture** | ARM64 PC では `*-win-arm64.msi`、x64 PC では `*-win-x64.msi` を使用。 |
-| **Need details** | 診断スクリプト（管理者 PowerShell）: `.\scripts\troubleshoot_msi.ps1 -MsiPath "C:\path\to\installer.msi"` |
+| 原因 | 対処 |
+|------|------|
+| **管理者権限なし** | MSI を右クリック → **管理者として実行**。UAC で「はい」を選ぶ。 |
+| **既にインストール済み** | インストール済みだと「再構成」が即終了します（ログ: `entering maintenance mode`）。IME が動かない場合は下記の修復コマンドを試してください。 |
+| **より新しい版が入っている** | 同じかより新しいバージョンが入っていると終了します。設定 → アプリで確認し、必要ならアンインストールしてください。 |
+| **アーキテクチャ不一致** | ARM64 PC では `*-win-arm64.msi`、x64 PC では `*-win-x64.msi` を使用してください。 |
+| **詳細を確認したい** | 診断スクリプト（管理者 PowerShell）: `.\scripts\troubleshoot_msi.ps1 -MsiPath "C:\path\to\installer.msi"` |
 
 **既にインストール済みの場合の修復（管理者 PowerShell）:**
 
@@ -52,44 +52,44 @@ msiexec /fa "C:\path\to\MozcUTPrivacy-....msi" /l*v "$env:TEMP\mozc-ut-repair.lo
 msiexec /i "C:\path\to\MozcUTPrivacy-....msi" REINSTALL=ALL REINSTALLMODE=amus /l*v "$env:TEMP\mozc-ut-reinstall.log"
 ```
 
-## Privacy Guarantees
+## プライバシー保証
 
-| Component | Network access |
-|-----------|----------------|
-| IME (mozc_server, mozc_tip, etc.) | **None** |
-| Updater (optional) | GitHub Releases API only |
-| Build pipeline (CI) | Dictionary sources only; not present in installed IME |
+| コンポーネント | ネットワークアクセス |
+|----------------|----------------------|
+| IME（mozc_server、mozc_tip など） | **なし** |
+| アップデータ（オプション） | GitHub Releases API のみ |
+| ビルドパイプライン（CI） | 辞書ソースのみ。インストール済み IME には含まれない |
 
-See [SECURITY.md](SECURITY.md) and [docs/NETWORK.md](docs/NETWORK.md) for the complete network audit.
+ネットワーク監査の詳細は [SECURITY.md](SECURITY.md) と [docs/NETWORK.md](docs/NETWORK.md) を参照してください。
 
-## Repository Structure
+## リポジトリ構成
 
 ```
 mozc-ut-privacy-windows/
-├── vendor/                  # Git submodules (Mozc + merge-ut-dictionaries)
-├── patches/                 # Minimal upstream patches
-├── scripts/                 # Build, sync, license, and release automation
-├── updater/                 # Standalone C++ updater
-├── licenses/                # License manifest and full license texts
-├── .github/workflows/       # CI/CD and monthly upstream sync
-└── docs/                    # Architecture and network documentation
+├── vendor/                  # Git サブモジュール（Mozc + merge-ut-dictionaries）
+├── patches/                 # 上流向けの最小限パッチ
+├── scripts/                 # ビルド・同期・ライセンス・リリース自動化
+├── updater/                 # スタンドアロン C++ アップデータ
+├── licenses/                # ライセンスマニフェストと全文
+├── .github/workflows/       # CI/CD と月次上流同期
+└── docs/                    # アーキテクチャとネットワークのドキュメント
 ```
 
-## Building Locally
+## ローカルビルド
 
-See [BUILD.md](BUILD.md) for full instructions.
+手順の詳細は [BUILD.md](BUILD.md) を参照してください。
 
-## Contributing
+## コントリビューション
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+[CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
 
-## Disclaimer
+## 免責事項
 
-This is an **unofficial** community project. It is not affiliated with, endorsed by, or maintained by Google LLC. "Mozc" is used descriptively to identify compatibility with the Mozc IME engine.
+本プロジェクトは Google LLC とは**無関係**の非公式コミュニティプロジェクトです。Google LLC による後援・承認・保守はありません。「Mozc」は Mozc IME エンジンとの互換性を示す説明的な名称として使用しています。
 
-## License
+## ライセンス
 
-- Project orchestration code: BSD-3-Clause (see [licenses/project/BSD-3-Clause.txt](licenses/project/BSD-3-Clause.txt))
-- Mozc engine: BSD-3-Clause ([google/mozc](https://github.com/google/mozc))
-- merge-ut-dictionaries: Apache-2.0 ([utuhiro78/merge-ut-dictionaries](https://github.com/utuhiro78/merge-ut-dictionaries))
-- Dictionary data: Combined licenses (see [CREDITS.txt](licenses/manifest.yaml))
+- プロジェクトのオーケストレーションコード: BSD-3-Clause（[licenses/project/BSD-3-Clause.txt](licenses/project/BSD-3-Clause.txt)）
+- Mozc エンジン: BSD-3-Clause（[google/mozc](https://github.com/google/mozc)）
+- merge-ut-dictionaries: Apache-2.0（[utuhiro78/merge-ut-dictionaries](https://github.com/utuhiro78/merge-ut-dictionaries)）
+- 辞書データ: 複合ライセンス（[licenses/manifest.yaml](licenses/manifest.yaml) を参照）
